@@ -1,0 +1,101 @@
+#include <AFMotor.h>
+#include <SoftwareSerial.h>
+
+// Configuración de los pines para el Bluetooth
+int bluetoothTx = 2; // TX del Arduino conectado al RXD del HC-05
+int bluetoothRx = 3; // RX del Arduino conectado al TXD del HC-05
+SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
+
+// Inicialización de los motores en el shield
+AF_DCMotor motor1(1, MOTOR12_1KHZ); // Motor delantero izquierdo
+AF_DCMotor motor2(2, MOTOR12_1KHZ); // Motor delantero derecho
+AF_DCMotor motor3(3, MOTOR34_1KHZ); // Motor trasero izquierdo
+AF_DCMotor motor4(4, MOTOR34_1KHZ); // Motor trasero derecho
+
+void setup() {
+  // Configuración inicial
+  Serial.begin(9600);        // Monitor serial para depuración
+  bluetooth.begin(9600);     // Configuración del módulo Bluetooth
+
+  // Configurar velocidades iniciales para los motores
+  motor1.setSpeed(200); // Velocidad de 0 a 255
+  motor2.setSpeed(200);
+  motor3.setSpeed(200);
+  motor4.setSpeed(200);
+
+  // Inicializar todos los motores en estado detenido
+  detener();
+  Serial.println("Esperando comandos Bluetooth...");
+}
+
+void loop() {
+  // Verificar si hay datos disponibles desde el Bluetooth
+  if (bluetooth.available()) {
+    char command = bluetooth.read(); // Leer el comando enviado desde la app
+    Serial.print("Comando recibido: ");
+    Serial.println(command);
+
+    // Evaluar el comando recibido y ejecutar la acción correspondiente
+    switch (command) {
+      case 'F': // Avanzar
+        adelante();
+        break;
+      case 'B': // Retroceder
+        atras();
+        break;
+      case 'L': // Girar a la izquierda
+        izquierda();
+        break;
+      case 'R': // Girar a la derecha
+        derecha();
+        break;
+      case 'S': // Detener
+        detener();
+        break;
+      default:
+        detener(); // Por seguridad, detener si el comando no es reconocido
+        break;
+    }
+  }
+}
+
+// Funciones para controlar los motores
+void adelante() {
+  motor1.run(FORWARD);
+  motor2.run(FORWARD);
+  motor3.run(FORWARD);
+  motor4.run(FORWARD);
+  Serial.println("Avanzando hacia adelante...");
+}
+
+void atras() {
+  motor1.run(BACKWARD);
+  motor2.run(BACKWARD);
+  motor3.run(BACKWARD);
+  motor4.run(BACKWARD);
+  Serial.println("Retrocediendo...");
+}
+
+void izquierda() {
+  motor1.run(FORWARD);
+  motor2.run(FORWARD);
+  motor3.run(BACKWARD); // Motores traseros giran en direcciones opuestas para girar
+  motor4.run(FORWARD);
+  Serial.println("Girando a la izquierda...");
+}
+
+void derecha() {
+  motor1.run(FORWARD);
+  motor2.run(FORWARD);
+  motor3.run(FORWARD); // Motores traseros giran en direcciones opuestas para girar
+  motor4.run(BACKWARD);
+  Serial.println("Girando a la derecha...");
+}
+
+void detener() {
+  motor1.run(RELEASE);
+  motor2.run(RELEASE);
+  motor3.run(RELEASE);
+  motor4.run(RELEASE);
+  Serial.println("Motores detenidos.");
+}
